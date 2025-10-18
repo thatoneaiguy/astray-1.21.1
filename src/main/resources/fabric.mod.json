@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "astray",
+  "version": "${version}",
+  "name": "astray",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "icon": "assets/astray/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-datagen": [
+      "com.everest.astray.client.AstrayDataGenerator"
+    ],
+    "client": [
+      "com.everest.astray.client.AstrayClient"
+    ],
+    "main": [
+      "com.everest.astray.Astray"
+    ]
+  },
+  "mixins": [
+    "astray.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}",
+    "veil" : "=2.1.1"
+  }
+}

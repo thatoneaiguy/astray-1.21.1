@@ -1,0 +1,24 @@
+{
+  "render_style": "CUBE",
+  "init_modules": [
+    "astray:rift_velocity",
+    "astray:rift_light"
+  ],
+  "update_modules": [],
+  "collision_modules": [
+  ],
+  "forces": [
+    "astray:force/point_force/test_point",
+    "astray:force/vortex/rift_vortex",
+    "astray:force/drag/test_drag",
+    "astray:force/gravity/test_gravity",
+    "astray:force/vector_field/test_vector_field"
+  ],
+  "render_modules": [
+    "astray:color/rift_color",
+    "astray:trail/rift_trail"
+  ],
+  "face_velocity": true,
+  "velocity_stretch_factor": 2.0,
+  "should_collide": false
+}

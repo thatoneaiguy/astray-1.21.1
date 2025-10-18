@@ -1,0 +1,81 @@
+package com.everest.astray.music;
+
+import de.keksuccino.melody.resources.audio.SimpleAudioFactory;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.minecraft.client.MinecraftClient;
+
+@Environment(EnvType.CLIENT)
+public class SwapMusicTestCommand {
+
+    private static final DynamicMusicHandler trackA = new DynamicMusicHandler();
+    private static final DynamicMusicHandler trackB = new DynamicMusicHandler();
+    private static boolean usingA = true;
+    private static boolean loaded = false;
+
+    public static void register() {
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            dispatcher.register(ClientCommandManager.literal("swapmusic")
+                    .executes(context -> {
+                        MinecraftClient client = MinecraftClient.getInstance();
+
+                        client.execute(() -> {
+                            try {
+                                if (!loaded) {
+                                    trackA.load("astray:music/obstructed-vision-chill.ogg", SimpleAudioFactory.SourceType.RESOURCE_LOCATION).join();
+                                    trackB.load("astray:music/obstructed-vision-battle.ogg", SimpleAudioFactory.SourceType.RESOURCE_LOCATION).join();
+                                    loaded = true;
+                                }
+
+                                if (!trackA.isPlaying() && !trackB.isPlaying()) {
+                                    trackA.play(0f, true);
+                                    usingA = true;
+                                    client.player.sendMessage(
+                                            net.minecraft.text.Text.literal("Started Track A"), false
+                                    );
+                                    return;
+                                }
+
+                                DynamicMusicHandler current = usingA ? trackA : trackB;
+                                DynamicMusicHandler other = usingA ? trackB : trackA;
+                                float time = current.getTime();
+
+                                other.setVolume(0f);
+                                other.play(time, true);
+
+                                new Thread(() -> {
+                                    int steps = 30;
+                                    float fadeDuration = 1.5f;
+                                    for (int i = 0; i <= steps; i++) {
+                                        float t = i / (float) steps;
+                                        current.setVolume(1f - t);
+                                        other.setVolume(t);
+                                        try { Thread.sleep((long)(fadeDuration * 1000 / steps)); } catch (InterruptedException ignored) {}
+                                    }
+                                    current.stop();
+                                    usingA = !usingA;
+                                }, "Melody-Crossfade").start();
+
+                                client.player.sendMessage(
+                                        net.minecraft.text.Text.literal(
+                                                "Swapped to " + (usingA ? "Track A" : "Track B") +
+                                                        " @ " + String.format("%.1fs", time)
+                                        ), false
+                                );
+
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                client.player.sendMessage(
+                                        net.minecraft.text.Text.literal("§cMusic swap failed: " + e.getMessage()), false
+                                );
+                            }
+                        });
+
+                        return 1;
+                    })
+            );
+        });
+    }
+}

@@ -1,5 +1,6 @@
 package com.everest.astray.music;
 
+import com.ibm.icu.util.ICUCloneNotSupportedException;
 import de.keksuccino.melody.resources.audio.MelodyAudioException;
 import de.keksuccino.melody.resources.audio.SimpleAudioFactory;
 import de.keksuccino.melody.resources.audio.SimpleAudioFactory.SourceType;
@@ -11,6 +12,11 @@ import java.lang.reflect.Field;
 import java.util.concurrent.CompletableFuture;
 
 public class DynamicMusicHandler {
+    public static DynamicMusicHandler active;
+
+    public DynamicMusicHandler() {
+        active = this;
+    }
 
     private static Field sourceField;
     private ALAudioClip clip;
@@ -48,6 +54,7 @@ public class DynamicMusicHandler {
         AL10.alSourcef(sourceId, AL11.AL_SEC_OFFSET, startSeconds);
         AL10.alSourcei(sourceId, AL10.AL_LOOPING, loop ? AL10.AL_TRUE : AL10.AL_FALSE);
         AL10.alSourcePlay(sourceId);
+        DynamicMusicHandler.active = this;
     }
 
     public void stop() {

@@ -1,5 +1,6 @@
 package com.everest.astray.music;
 
+import com.everest.astray.ui.ToastHelper;
 import de.keksuccino.melody.resources.audio.SimpleAudioFactory;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -32,9 +33,7 @@ public class SwapMusicTestCommand {
                                 if (!trackA.isPlaying() && !trackB.isPlaying()) {
                                     trackA.play(0f, true);
                                     usingA = true;
-                                    client.player.sendMessage(
-                                            net.minecraft.text.Text.literal("Started Track A"), false
-                                    );
+                                    ToastHelper.showMusicToast("Now Playing", "Obstructed Vision (Chill) - Bashful");
                                     return;
                                 }
 
@@ -58,18 +57,13 @@ public class SwapMusicTestCommand {
                                     usingA = !usingA;
                                 }, "Melody-Crossfade").start();
 
-                                client.player.sendMessage(
-                                        net.minecraft.text.Text.literal(
-                                                "Swapped to " + (usingA ? "Track A" : "Track B") +
-                                                        " @ " + String.format("%.1fs", time)
-                                        ), false
+                                ToastHelper.showMusicToast(
+                                        "Now Playing",
+                                        (usingA ? "Obstructed Vision (Battle)" : "Obstructed Vision (Chill)") + " - Bashful"
                                 );
 
                             } catch (Exception e) {
                                 e.printStackTrace();
-                                client.player.sendMessage(
-                                        net.minecraft.text.Text.literal("§cMusic swap failed: " + e.getMessage()), false
-                                );
                             }
                         });
 

@@ -17,6 +17,9 @@ public class DynamicMusicHandler {
     private int sourceId;
     private boolean fading;
     private float volume = 1f;
+    private float pausedPosition = 0f;
+    private boolean paused = false;
+    private String currentTrackPath = "";
 
     static {
         try {
@@ -28,6 +31,7 @@ public class DynamicMusicHandler {
     }
 
     public CompletableFuture<Void> load(String path, SourceType type) throws MelodyAudioException {
+        this.currentTrackPath = path;
         return SimpleAudioFactory.ogg(path, type).thenAccept(c -> {
             this.clip = c;
             try {
@@ -37,6 +41,7 @@ public class DynamicMusicHandler {
             }
         });
     }
+
 
     public void play(float startSeconds, boolean loop) {
         if (clip == null) return;
@@ -67,11 +72,50 @@ public class DynamicMusicHandler {
         }, "Melody-FadeOut").start();
     }
 
+    public void pauseFadeOut(float durationSeconds, Runnable afterFade) {
+        if (clip == null || fading) return;
+        fading = true;
+        new Thread(() -> {
+            float startVol = volume;
+            int steps = 30;
+            for (int i = 0; i <= steps; i++) {
+                float t = i / (float) steps;
+                setVolume(startVol * (1f - t));
+                try { Thread.sleep((long) (durationSeconds * 1000f / steps)); } catch (InterruptedException ignored) {}
+            }
+            pausedPosition = getTime();
+            AL10.alSourcePause(sourceId);
+            setVolume(startVol);
+            fading = false;
+            paused = true;
+
+            if (afterFade != null) afterFade.run();
+        }, "Melody-FadeOut").start();
+    }
+
+
     public void fadeIn(float durationSeconds, boolean loop) {
         if (clip == null || fading) return;
         fading = true;
         setVolume(0f);
         play(0f, loop);
+        new Thread(() -> {
+            int steps = 30;
+            for (int i = 0; i <= steps; i++) {
+                float t = i / (float) steps;
+                setVolume(t);
+                try { Thread.sleep((long) (durationSeconds * 1000f / steps)); } catch (InterruptedException ignored) {}
+            }
+            setVolume(1f);
+            fading = false;
+        }, "Melody-FadeIn").start();
+    }
+
+    public void pauseFadeIn(float durationSeconds, boolean loop) {
+        if (clip == null || fading) return;
+        fading = true;
+        setVolume(0f);
+        resume(loop);
         new Thread(() -> {
             int steps = 30;
             for (int i = 0; i <= steps; i++) {
@@ -115,6 +159,23 @@ public class DynamicMusicHandler {
             clip.close();
             clip = null;
         }
+    }
+
+    public void pause() {
+        if (clip == null || !isPlaying()) return;
+        pausedPosition = getTime();
+        AL10.alSourcePause(sourceId);
+        paused = true;
+    }
+
+    public void resume(boolean loop) {
+        if (clip == null || !paused) return;
+        play(pausedPosition, loop);
+        paused = false;
+    }
+
+    public String getCurrentTrackPath() {
+        return currentTrackPath;
     }
 }
 
